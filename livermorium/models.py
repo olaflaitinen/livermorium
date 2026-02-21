@@ -11,7 +11,7 @@ from livermorium.stats import BaseDetector, DetectionResult
 class IsolationForestModel(BaseDetector):
     """Isolation Forest based anomaly detection.
 
-    Uses random partitioning to isolate anomalies — points that are
+    Uses random partitioning to isolate anomalies - points that are
     easier to isolate are more likely to be anomalous.
     """
 

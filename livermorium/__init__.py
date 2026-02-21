@@ -1,5 +1,5 @@
 """
-Livermorium — Intelligent Cybersecurity Anomaly Detection Library
+Livermorium - Intelligent Cybersecurity Anomaly Detection Library
 
 Developed by DTU Compute for Cursor Hackathon Baku 2026.
 

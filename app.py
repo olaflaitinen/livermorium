@@ -1,5 +1,5 @@
 """
-Livermorium — Real-Time Network Threat Detection Dashboard
+Livermorium - Real-Time Network Threat Detection Dashboard
 
 Built by DTU Compute for Cursor Hackathon Baku 2026.
 Demonstrates the livermorium library's anomaly detection capabilities
@@ -24,7 +24,7 @@ from livermorium.viz import (
 
 st.set_page_config(
     page_title="Livermorium | Threat Detection",
-    page_icon="🛡️",
+    page_icon="Lv",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -149,7 +149,7 @@ st.markdown(
 st.markdown(
     """
 <div class="main-header">
-    <h1>⚛ LIVERMORIUM</h1>
+    <h1>LIVERMORIUM</h1>
     <p>Intelligent Network Threat Detection System</p>
     <div class="team-badge">DTU COMPUTE · CURSOR HACKATHON BAKU 2026</div>
 </div>
@@ -162,7 +162,7 @@ st.markdown("---")
 # ── Sidebar Controls ─────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.markdown("### ⚙ Detection Configuration")
+    st.markdown("### Detection Configuration")
 
     st.markdown("**Detection Methods**")
     use_zscore = st.checkbox("Z-Score", value=True)
@@ -210,7 +210,7 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    run_btn = st.button("🔍 Run Analysis", type="primary", use_container_width=True)
+    run_btn = st.button("Run Analysis", type="primary", use_container_width=True)
 
     st.markdown("---")
     st.markdown(
@@ -302,7 +302,7 @@ with col5:
 
 # ── Threat Gauge + Attack Distribution ───────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ THREAT ASSESSMENT</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">THREAT ASSESSMENT</div>', unsafe_allow_html=True)
 
 gauge_col, dist_col = st.columns([1, 1])
 
@@ -316,21 +316,21 @@ with dist_col:
 
 # ── Main Anomaly Detection Chart ─────────────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ ANOMALY DETECTION RESULTS</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">ANOMALY DETECTION RESULTS</div>', unsafe_allow_html=True)
 
 fig_anomalies = plot_anomalies(traffic, report)
 st.plotly_chart(fig_anomalies, use_container_width=True)
 
 # ── Metrics Over Time ────────────────────────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ ANOMALY METRICS TIMELINE</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">ANOMALY METRICS TIMELINE</div>', unsafe_allow_html=True)
 
 fig_metrics = metrics_over_time(traffic, report)
 st.plotly_chart(fig_metrics, use_container_width=True)
 
 # ── Per-Method Breakdown ─────────────────────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ METHOD-LEVEL ANALYSIS</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">METHOD-LEVEL ANALYSIS</div>', unsafe_allow_html=True)
 
 method_cols = st.columns(len(report.details))
 
@@ -356,7 +356,7 @@ for col, (method_name, result) in zip(method_cols, report.details.items()):
 
 # ── Detection Accuracy ───────────────────────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ DETECTION ACCURACY</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">DETECTION ACCURACY</div>', unsafe_allow_html=True)
 
 tp = int(np.sum(report.anomalies & traffic.anomaly_labels))
 fp = int(np.sum(report.anomalies & ~traffic.anomaly_labels))
@@ -389,7 +389,7 @@ for col, (label, value, clr) in zip(acc_cols, metrics_data):
 
 # ── Alert Log ─────────────────────────────────────────────────────────────────
 
-st.markdown('<div class="section-title">▸ ALERT LOG</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">ALERT LOG</div>', unsafe_allow_html=True)
 
 df = traffic.to_dataframe()
 alert_df = df[report.anomalies].copy()
@@ -413,7 +413,7 @@ st.markdown("---")
 st.markdown(
     """
 <div style='text-align:center; color:#555; font-size:0.8rem; padding:1rem 0;'>
-    <b>Livermorium v0.1.0</b> · Built with ❤ by <b>DTU Compute</b> · Cursor Hackathon Baku 2026<br>
+    <b>Livermorium v0.1.0</b> · Built by <b>DTU Compute</b> · Cursor Hackathon Baku 2026<br>
     Combining Cybersecurity, AI/ML, Statistics & Scientific Computing
 </div>
 """,

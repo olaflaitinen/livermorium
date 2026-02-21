@@ -1,4 +1,4 @@
-# ⚛ Livermorium
+# Livermorium
 
 **Intelligent Cybersecurity Anomaly Detection Library**
 
@@ -8,7 +8,7 @@ Livermorium combines DTU Compute's expertise in **Cybersecurity**, **AI/Machine 
 
 ## Core Feature
 
-**Real-time network traffic anomaly detection** using an ensemble of statistical and ML methods — detects DDoS attacks, data exfiltration, port scanning, slowloris attacks, and cryptomining patterns.
+**Real-time network traffic anomaly detection** using an ensemble of statistical and ML methods - detects DDoS attacks, data exfiltration, port scanning, slowloris attacks, and cryptomining patterns.
 
 ## Installation
 
@@ -65,11 +65,11 @@ streamlit run app.py
 
 ## Simulated Attack Types
 
-- **DDoS** — Massive traffic volume spikes
-- **Exfiltration** — Unusual outbound data transfer
-- **Port Scan** — High connection count bursts
-- **Slowloris** — Latency degradation attacks
-- **Cryptomining** — Symmetric traffic patterns
+- **DDoS** - Massive traffic volume spikes
+- **Exfiltration** - Unusual outbound data transfer
+- **Port Scan** - High connection count bursts
+- **Slowloris** - Latency degradation attacks
+- **Cryptomining** - Symmetric traffic patterns
 
 ## Project Structure
 
@@ -90,14 +90,14 @@ livermorium/
 
 ## DTU Compute Research Areas Combined
 
-1. **Cybersecurity** — Network threat modeling and attack simulation
-2. **AI / Machine Learning** — Isolation Forest anomaly detection
-3. **Statistics** — Z-Score, IQR, and EWMA statistical methods
-4. **Scientific Computing** — Numerical algorithms and data pipelines
+1. **Cybersecurity** - Network threat modeling and attack simulation
+2. **AI / Machine Learning** - Isolation Forest anomaly detection
+3. **Statistics** - Z-Score, IQR, and EWMA statistical methods
+4. **Scientific Computing** - Numerical algorithms and data pipelines
 
 ## Team
 
-**DTU Compute** — Technical University of Denmark, Department of Applied Mathematics and Computer Science
+**DTU Compute** - Technical University of Denmark, Department of Applied Mathematics and Computer Science
 
 ## License
 
