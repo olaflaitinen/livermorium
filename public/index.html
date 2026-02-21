@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livermorium | Intelligent Threat Detection</title>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06060e;--bg2:#0b0b1a;--card:#0f0f23;--card2:#141430;
+  --border:#1a1a3e;--border2:#2a2a5e;
+  --cyan:#00d4ff;--green:#51cf66;--red:#ff3333;--yellow:#ffd43b;
+  --orange:#ff922b;--purple:#cc5de8;--blue:#4dabf7;
+  --text:#e8e8f0;--muted:#7a7a9e;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;overflow-x:hidden;min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Animated bg grid */
+body::before{content:'';position:fixed;inset:0;background:
+  linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+.container{max-width:1400px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* Header */
+header{text-align:center;padding:40px 0 20px}
+.logo{font-family:'JetBrains Mono',monospace;font-size:2.6rem;font-weight:700;
+  background:linear-gradient(135deg,#00d4ff 0%,#51cf66 50%,#00d4ff 100%);
+  background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:shimmer 3s linear infinite}
+@keyframes shimmer{to{background-position:200% center}}
+header .sub{color:var(--muted);font-size:.95rem;margin-top:4px;letter-spacing:.5px}
+.badge{display:inline-block;margin-top:12px;padding:6px 18px;border-radius:20px;font-size:.75rem;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;color:var(--cyan);
+  background:linear-gradient(90deg,rgba(0,212,255,.08),rgba(81,207,102,.08));border:1px solid rgba(0,212,255,.25)}
+
+.divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+
+/* Controls */
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:20px 24px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:28px}
+.control-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.control-group label{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.control-group select,.control-group input{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:.85rem;font-family:'Inter',sans-serif}
+.control-group select:focus,.control-group input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.15)}
+.btn-run{padding:10px 32px;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-size:.9rem;letter-spacing:.5px;transition:all .2s;font-family:'Inter',sans-serif;white-space:nowrap}
+.btn-run:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,212,255,.3)}
+.btn-run:disabled{opacity:.5;cursor:wait;transform:none}
+
+/* Metrics row */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.metric-card{background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;transition:border-color .3s,transform .2s}
+.metric-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.metric-card .value{font-family:'JetBrains Mono',monospace;font-size:1.9rem;font-weight:700;line-height:1.2}
+.metric-card .label{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:1.2px;margin-top:6px}
+
+/* Section titles */
+.section-title{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:8px;margin:32px 0 16px;letter-spacing:.5px}
+
+/* Charts */
+.chart-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;overflow:hidden}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.chart-row{grid-template-columns:1fr}}
+
+/* Method cards */
+.method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:28px}
+.method-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;transition:border-color .3s}
+.method-card:hover{border-color:var(--cyan)}
+.method-tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--cyan);background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);letter-spacing:.5px}
+.method-card .val{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--red);margin:10px 0 4px}
+.method-card .info{font-size:.78rem;color:var(--muted);line-height:1.6}
+
+/* Accuracy grid */
+.accuracy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:28px}
+
+/* Alert table */
+.alert-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:var(--card2);color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:1px;padding:12px 14px;text-align:left;font-family:'JetBrains Mono',monospace;position:sticky;top:0}
+td{padding:10px 14px;border-top:1px solid var(--border)}
+tr:hover td{background:rgba(0,212,255,.03)}
+.tag-attack{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
+.tag-ddos{background:rgba(255,51,51,.15);color:#ff6b6b}
+.tag-exfiltration{background:rgba(255,146,43,.15);color:#ff922b}
+.tag-port_scan{background:rgba(255,212,59,.15);color:#ffd43b}
+.tag-slowloris{background:rgba(204,93,232,.15);color:#cc5de8}
+.tag-cryptomining{background:rgba(0,212,255,.15);color:#00d4ff}
+
+.scrollable{max-height:420px;overflow-y:auto}
+.scrollable::-webkit-scrollbar{width:6px}
+.scrollable::-webkit-scrollbar-track{background:var(--bg2)}
+.scrollable::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* Footer */
+footer{text-align:center;padding:24px 0 40px;color:var(--muted);font-size:.78rem}
+footer b{color:var(--cyan)}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(6,6,14,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .4s}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.spinner{width:50px;height:50px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{margin-top:16px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.85rem}
+
+/* Checkbox group */
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px}
+.cb-label{display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);transition:all .2s}
+.cb-label:hover{border-color:var(--cyan)}
+.cb-label input{accent-color:var(--cyan)}
+.cb-label input:checked + span{color:var(--cyan)}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loader">
+  <div class="spinner"></div>
+  <p>Analyzing network traffic...</p>
+</div>
+
+<div class="container">
+
+<header>
+  <div class="logo">&#9883; LIVERMORIUM</div>
+  <div class="sub">Intelligent Network Threat Detection System</div>
+  <div class="badge">DTU COMPUTE &middot; CURSOR HACKATHON BAKU 2026</div>
+</header>
+
+<hr class="divider">
+
+<!-- Controls -->
+<div class="controls" id="controls">
+  <div class="control-group">
+    <label>Detection Methods</label>
+    <div class="checkbox-group">
+      <label class="cb-label"><input type="checkbox" value="zscore" checked><span>Z-Score</span></label>
+      <label class="cb-label"><input type="checkbox" value="iqr"><span>IQR</span></label>
+      <label class="cb-label"><input type="checkbox" value="ewma" checked><span>EWMA</span></label>
+      <label class="cb-label"><input type="checkbox" value="isolation_forest" checked><span>Isolation Forest</span></label>
+    </div>
+  </div>
+  <div class="control-group" style="max-width:130px">
+    <label>Sensitivity</label>
+    <input type="range" id="sensitivity" min="0" max="1" step="0.05" value="0.6">
+    <span class="mono" style="font-size:.78rem;color:var(--cyan);text-align:center" id="sensVal">0.60</span>
+  </div>
+  <div class="control-group" style="max-width:110px">
+    <label>Data Points</label>
+    <select id="nPoints"><option value="400">400</option><option value="800" selected>800</option><option value="1200">1200</option><option value="2000">2000</option></select>
+  </div>
+  <div class="control-group" style="max-width:110px">
+    <label>Attack Rate</label>
+    <select id="ratio"><option value="0.03">3%</option><option value="0.06" selected>6%</option><option value="0.10">10%</option><option value="0.15">15%</option></select>
+  </div>
+  <div class="control-group" style="max-width:90px">
+    <label>Seed</label>
+    <input type="number" id="seed" value="42" min="0" max="9999" style="width:80px">
+  </div>
+  <button class="btn-run" id="runBtn" onclick="runAnalysis()">&#128270; ANALYZE</button>
+</div>
+
+<!-- Metrics -->
+<div class="metrics" id="metricsRow"></div>
+
+<!-- Threat + Distribution -->
+<div class="section-title">&#9654; THREAT ASSESSMENT</div>
+<div class="chart-row">
+  <div class="chart-container" id="gaugeChart"></div>
+  <div class="chart-container" id="pieChart"></div>
+</div>
+
+<!-- Main chart -->
+<div class="section-title">&#9654; ANOMALY DETECTION RESULTS</div>
+<div class="chart-container" id="mainChart"></div>
+
+<!-- Metrics timeline -->
+<div class="section-title">&#9654; ANOMALY METRICS TIMELINE</div>
+<div class="chart-container" id="timelineChart"></div>
+
+<!-- Method breakdown -->
+<div class="section-title">&#9654; METHOD-LEVEL ANALYSIS</div>
+<div class="method-grid" id="methodGrid"></div>
+
+<!-- Accuracy -->
+<div class="section-title">&#9654; DETECTION ACCURACY</div>
+<div class="accuracy-grid" id="accuracyGrid"></div>
+
+<!-- Alert log -->
+<div class="section-title">&#9654; ALERT LOG</div>
+<div class="alert-table-wrap">
+  <div class="scrollable" id="alertTableWrap"></div>
+</div>
+
+<footer>
+  <b>Livermorium v0.1.0</b> &middot; Built with &#10084; by <b>DTU Compute</b> &middot; Cursor Hackathon Baku 2026<br>
+  Combining Cybersecurity, AI/ML, Statistics &amp; Scientific Computing
+</footer>
+
+</div>
+
+<script>
+const THREAT_COLORS={NORMAL:'#51cf66',LOW:'#ffd43b',MEDIUM:'#ff922b',HIGH:'#ff6b6b',CRITICAL:'#ff0000'};
+const ATTACK_COLORS={ddos:'#ff3333',exfiltration:'#ff922b',port_scan:'#ffd43b',slowloris:'#cc5de8',cryptomining:'#00d4ff'};
+const DARK={paper:'#0a0a14',plot:'#0a0a14',grid:'#1a1a3e',font:'#e0e0e0',fontFam:'JetBrains Mono, monospace'};
+
+document.getElementById('sensitivity').addEventListener('input',e=>{
+  document.getElementById('sensVal').textContent=parseFloat(e.target.value).toFixed(2);
+});
+
+async function runAnalysis(){
+  const btn=document.getElementById('runBtn');
+  const loader=document.getElementById('loader');
+  btn.disabled=true; loader.classList.remove('hidden');
+
+  const checks=[...document.querySelectorAll('#controls input[type=checkbox]:checked')].map(c=>c.value);
+  const methods=checks.length?checks.join(','):'zscore';
+  const sensitivity=document.getElementById('sensitivity').value;
+  const n=document.getElementById('nPoints').value;
+  const ratio=document.getElementById('ratio').value;
+  const seed=document.getElementById('seed').value;
+
+  const url=`/api/detect?n=${n}&ratio=${ratio}&sensitivity=${sensitivity}&seed=${seed}&methods=${methods}`;
+
+  try{
+    const res=await fetch(url);
+    if(!res.ok) throw new Error(`API error ${res.status}`);
+    const data=await res.json();
+    renderDashboard(data);
+  }catch(e){
+    console.error(e);
+    alert('Analysis failed: '+e.message+'. Make sure the API is running.');
+  }finally{
+    btn.disabled=false;
+    setTimeout(()=>loader.classList.add('hidden'),300);
+  }
+}
+
+function renderDashboard(d){
+  renderMetrics(d);
+  renderGauge(d);
+  renderPie(d);
+  renderMainChart(d);
+  renderTimeline(d);
+  renderMethods(d);
+  renderAccuracy(d);
+  renderAlertTable(d);
+}
+
+function metricHTML(value,label,color){
+  return `<div class="metric-card"><div class="value" style="color:${color}">${value}</div><div class="label">${label}</div></div>`;
+}
+
+function renderMetrics(d){
+  const c=THREAT_COLORS[d.threat_level]||'#fff';
+  document.getElementById('metricsRow').innerHTML=[
+    metricHTML(d.threat_level,'Threat Level',c),
+    metricHTML(d.n_anomalies,'Anomalies Detected','#ff6b6b'),
+    metricHTML((d.anomaly_ratio*100).toFixed(1)+'%','Anomaly Rate','#ffd43b'),
+    metricHTML(d.n_total.toLocaleString(),'Data Points','#00d4ff'),
+    metricHTML(d.methods_used.length,'Active Methods','#51cf66'),
+  ].join('');
+}
+
+function renderGauge(d){
+  const c=THREAT_COLORS[d.threat_level]||'#fff';
+  Plotly.newPlot('gaugeChart',[{type:'indicator',mode:'gauge+number',value:d.threat_score*100,
+    number:{suffix:'%',font:{size:38,color:c,family:DARK.fontFam}},
+    title:{text:'Threat Level: '+d.threat_level,font:{size:15,color:DARK.font}},
+    gauge:{axis:{range:[0,100],tickcolor:'#555'},bar:{color:c},bgcolor:'#1a1a2e',bordercolor:'#333',
+      steps:[{range:[0,20],color:'#0d2818'},{range:[20,40],color:'#2d2a0a'},{range:[40,60],color:'#2d1a0a'},{range:[60,80],color:'#2d0a0a'},{range:[80,100],color:'#3d0000'}],
+      threshold:{line:{color:'#ff0000',width:3},thickness:.8,value:d.threat_score*100}}}],
+    {paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:DARK.font},height:260,margin:{l:30,r:30,t:60,b:20}},{responsive:true,displayModeBar:false});
+}
+
+function renderPie(d){
+  const ac=d.attack_counts||{};
+  const labels=Object.keys(ac),vals=Object.values(ac);
+  if(!labels.length){document.getElementById('pieChart').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:260px;color:var(--muted)">No attack type data</div>';return;}
+  const colors=labels.map(l=>ATTACK_COLORS[l]||'#4dabf7');
+  Plotly.newPlot('pieChart',[{type:'pie',labels,values:vals,hole:.45,
+    marker:{colors,line:{color:'#222',width:2}},textfont:{color:'#fff',size:12}}],
+    {paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:DARK.font,family:DARK.fontFam},
+    height:260,margin:{l:20,r:20,t:40,b:20},title:{text:'Attack Type Distribution',font:{color:'#00d4ff',size:14}},
+    showlegend:true,legend:{font:{size:11}}},{responsive:true,displayModeBar:false});
+}
+
+function renderMainChart(d){
+  const ts=d.timestamps;
+  const anomIdx=[];d.detected.forEach((v,i)=>{if(v)anomIdx.push(i)});
+  const anomTs=anomIdx.map(i=>ts[i]),anomBR=anomIdx.map(i=>d.bytes_received[i]);
+  const barColors=d.detected.map(v=>v?'#ff3333':'rgba(26,26,46,0.5)');
+
+  const traces=[
+    {x:ts,y:d.bytes_sent,name:'Bytes Sent',line:{color:'#00d4ff',width:1},opacity:.7,xaxis:'x',yaxis:'y'},
+    {x:ts,y:d.bytes_received,name:'Bytes Recv',line:{color:'#4dabf7',width:1},opacity:.7,xaxis:'x',yaxis:'y'},
+    {x:anomTs,y:anomBR,mode:'markers',name:'Anomaly',marker:{color:'#ff3333',size:7,symbol:'x',line:{width:1,color:'#ff6666'}},xaxis:'x',yaxis:'y'},
+    {x:ts,y:d.connections,name:'Connections',line:{color:'#ffd43b',width:1},opacity:.7,xaxis:'x2',yaxis:'y2'},
+    {x:ts,y:d.packets,name:'Packets',line:{color:'#51cf66',width:1},opacity:.7,xaxis:'x2',yaxis:'y2'},
+    {x:ts,y:d.latency,name:'Latency',line:{color:'#cc5de8',width:1},opacity:.7,xaxis:'x3',yaxis:'y3'},
+    {x:ts,y:d.scores,type:'bar',name:'Score',marker:{color:barColors},opacity:.85,xaxis:'x4',yaxis:'y4'},
+  ];
+
+  const layout={
+    grid:{rows:4,columns:1,subplots:[['xy'],['x2y2'],['x3y3'],['x4y4']],roworder:'top to bottom',ygap:.08},
+    height:800,paper_bgcolor:DARK.paper,plot_bgcolor:DARK.plot,
+    font:{color:DARK.font,family:DARK.fontFam,size:10},
+    showlegend:true,legend:{orientation:'h',y:1.02,x:1,xanchor:'right',font:{size:10}},
+    margin:{l:55,r:20,t:30,b:40},
+    xaxis:{showticklabels:false,gridcolor:DARK.grid},xaxis2:{showticklabels:false,gridcolor:DARK.grid},
+    xaxis3:{showticklabels:false,gridcolor:DARK.grid},xaxis4:{gridcolor:DARK.grid},
+    yaxis:{title:'Bytes',gridcolor:DARK.grid},yaxis2:{title:'Count',gridcolor:DARK.grid},
+    yaxis3:{title:'Latency',gridcolor:DARK.grid},yaxis4:{title:'Score',gridcolor:DARK.grid},
+    annotations:[
+      {text:'Network Traffic (Bytes)',xref:'paper',yref:'paper',x:0,y:1,showarrow:false,font:{color:'#00d4ff',size:11}},
+      {text:'Connections & Packets',xref:'paper',yref:'paper',x:0,y:.73,showarrow:false,font:{color:'#00d4ff',size:11}},
+      {text:'Latency (ms)',xref:'paper',yref:'paper',x:0,y:.47,showarrow:false,font:{color:'#00d4ff',size:11}},
+      {text:'Anomaly Score',xref:'paper',yref:'paper',x:0,y:.22,showarrow:false,font:{color:'#00d4ff',size:11}},
+    ],
+  };
+  Plotly.newPlot('mainChart',traces,layout,{responsive:true,displayModeBar:false});
+}
+
+function renderTimeline(d){
+  const ts=d.timestamps,scores=d.scores;
+  const w=20,kernel=Array(w).fill(1/w);
+  const rate=d.detected.map(Number);
+  const rolling=rate.map((_,i)=>{
+    let s=0,c=0;for(let j=Math.max(0,i-w+1);j<=i;j++){s+=rate[j];c++;}return s/c;
+  });
+
+  Plotly.newPlot('timelineChart',[
+    {x:ts,y:scores,name:'Anomaly Score',fill:'tozeroy',line:{color:'#ff6b6b',width:1},fillcolor:'rgba(255,107,107,.12)'},
+    {x:ts,y:rolling,name:'Rolling Anomaly Rate',line:{color:'#ffd43b',width:2,dash:'dash'},yaxis:'y2'},
+  ],{
+    height:280,paper_bgcolor:DARK.paper,plot_bgcolor:DARK.plot,font:{color:DARK.font,family:DARK.fontFam,size:10},
+    margin:{l:55,r:55,t:20,b:40},
+    yaxis:{title:'Score',gridcolor:DARK.grid},
+    yaxis2:{title:'Rate',overlaying:'y',side:'right',range:[0,1],gridcolor:DARK.grid},
+    xaxis:{gridcolor:DARK.grid},
+    legend:{orientation:'h',y:1.1,font:{size:10}},
+    title:{text:'Anomaly Metrics Over Time',font:{color:'#00d4ff',size:13},y:.97},
+  },{responsive:true,displayModeBar:false});
+}
+
+function renderMethods(d){
+  const md=d.method_details;
+  document.getElementById('methodGrid').innerHTML=Object.entries(md).map(([name,v])=>`
+    <div class="method-card">
+      <div class="method-tag">${name.toUpperCase().replace('_',' ')}</div>
+      <div class="val">${v.n_detected}</div>
+      <div class="label" style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:1px">Detections</div>
+      <div class="info" style="margin-top:8px">
+        Avg Score: ${v.avg_score.toFixed(3)}<br>
+        Max Score: ${v.max_score.toFixed(3)}<br>
+        Threshold: ${v.threshold.toFixed(3)}
+      </div>
+    </div>`).join('');
+}
+
+function renderAccuracy(d){
+  const a=d.accuracy;
+  const items=[
+    ['True Pos',a.tp,'#51cf66'],['False Pos',a.fp,'#ffd43b'],['False Neg',a.fn,'#ff922b'],
+    ['Precision',(a.precision*100).toFixed(1)+'%','#00d4ff'],
+    ['Recall',(a.recall*100).toFixed(1)+'%','#cc5de8'],
+    ['F1 Score',(a.f1*100).toFixed(1)+'%','#4dabf7'],
+  ];
+  document.getElementById('accuracyGrid').innerHTML=items.map(([l,v,c])=>metricHTML(v,l,c)).join('');
+}
+
+function renderAlertTable(d){
+  const rows=[];
+  d.detected.forEach((det,i)=>{
+    if(det) rows.push({ts:d.timestamps[i],attack:d.attack_types[i]||'unknown',score:d.scores[i],
+      bs:d.bytes_sent[i],br:d.bytes_received[i],pk:d.packets[i],cn:d.connections[i],lt:d.latency[i]});
+  });
+  rows.sort((a,b)=>b.score-a.score);
+  const top=rows.slice(0,30);
+
+  if(!top.length){document.getElementById('alertTableWrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--muted)">No anomalies detected.</div>';return;}
+
+  let html='<table><thead><tr><th>Timestamp</th><th>Attack</th><th>Score</th><th>Bytes Sent</th><th>Bytes Recv</th><th>Packets</th><th>Conns</th><th>Latency</th></tr></thead><tbody>';
+  top.forEach(r=>{
+    const cls=ATTACK_COLORS[r.attack]?`tag-${r.attack}`:'';
+    html+=`<tr><td class="mono" style="font-size:.78rem;color:var(--muted)">${r.ts}</td>
+      <td><span class="tag-attack ${cls}">${r.attack}</span></td>
+      <td class="mono" style="color:#ff6b6b">${r.score.toFixed(3)}</td>
+      <td class="mono">${r.bs.toFixed(0)}</td><td class="mono">${r.br.toFixed(0)}</td>
+      <td class="mono">${r.pk}</td><td class="mono">${r.cn}</td>
+      <td class="mono">${r.lt.toFixed(1)}ms</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('alertTableWrap').innerHTML=html;
+}
+
+// Auto-run on load
+window.addEventListener('DOMContentLoaded',()=>runAnalysis());
+</script>
+</body>
+</html>
