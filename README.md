@@ -13,9 +13,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/python-3.9%2B-blue" alt="Python 3.9+">
-  <img src="https://img.shields.io/badge/version-0.1.0-green" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="MIT License">
+  <a href="https://pypi.org/project/livermorium/"><img src="https://img.shields.io/pypi/v/livermorium?color=blue&label=PyPI" alt="PyPI"></a>
+  <a href="https://pypi.org/project/livermorium/"><img src="https://img.shields.io/pypi/pyversions/livermorium" alt="Python Versions"></a>
+  <a href="https://github.com/olaflaitinen/livermorium/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/hackathon-Cursor%20Baku%202026-cyan" alt="Cursor Hackathon Baku 2026">
 </p>
 
@@ -97,6 +97,14 @@ Traditional network intrusion detection systems rely on signature-based matching
 ---
 
 ## Installation
+
+### From PyPI (Recommended)
+
+```bash
+pip install livermorium
+```
+
+Published at: **[pypi.org/project/livermorium](https://pypi.org/project/livermorium/)**
 
 ### From Source (Development)
 
