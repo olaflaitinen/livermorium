@@ -427,15 +427,17 @@ The `NetworkSimulator` generates a feature vector $\mathbf{f}_t \in \mathbb{R}^5
 
 $$c(t) = 0.3 \cdot \sin\!\left(\frac{2\pi t}{288}\right) + 1.0$$
 
-$$\text{bytes\_sent}_t \sim \text{Exp}(\lambda=500) \cdot c(t) + 200$$
+$$B^{\text{sent}}_t \sim \mathrm{Exp}(\lambda{=}500) \cdot c(t) + 200$$
 
-$$\text{bytes\_received}_t \sim \text{Exp}(\lambda=800) \cdot c(t) + 300$$
+$$B^{\text{recv}}_t \sim \mathrm{Exp}(\lambda{=}800) \cdot c(t) + 300$$
 
-$$\text{packets}_t \sim \text{Poisson}(\mu=50) \cdot c(t)$$
+$$P_t \sim \mathrm{Poisson}(\mu{=}50) \cdot c(t)$$
 
-$$\text{connections}_t \sim \text{Poisson}(\mu=10) \cdot c(t)$$
+$$C_t \sim \mathrm{Poisson}(\mu{=}10) \cdot c(t)$$
 
-$$\text{latency}_t \sim \text{Gamma}(k=2,\;\theta=10) + 5$$
+$$L_t \sim \mathrm{Gamma}(k{=}2,\;\theta{=}10) + 5$$
+
+where $B^{\text{sent}}$ = bytes sent, $B^{\text{recv}}$ = bytes received, $P$ = packets, $C$ = connections, $L$ = latency.
 
 **Attack injection** multiplies affected features by a random factor $\eta \sim U(\text{low}, \text{high})$ within a window of up to 5 consecutive time steps:
 
