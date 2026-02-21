@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "livermorium"
+version = "0.1.0"
+description = "Intelligent cybersecurity anomaly detection combining Statistics, ML, and Scientific Computing"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "DTU Compute", email = "team@dtucompute.dk"},
+]
+keywords = ["cybersecurity", "anomaly-detection", "machine-learning", "network-security"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "plotly>=5.15.0",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.28.0"]
+dev = ["pytest", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/dtucompute/livermorium"
+
+[tool.setuptools.packages.find]
+include = ["livermorium*"]
