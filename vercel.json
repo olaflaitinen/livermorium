@@ -1,11 +1,13 @@
 {
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "public",
   "functions": {
     "api/*.py": {
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "runtime": "@vercel/python"
     }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/public/$1" }
-  ]
+  }
 }
