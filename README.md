@@ -313,29 +313,38 @@ All functions are in `livermorium.viz` and return `plotly.graph_objects.Figure`.
 
 Computes the number of standard deviations each observation lies from the training mean. Based on the assumption that normal data follows an approximately Gaussian distribution.
 
-**Scoring function:**
+**Training phase** - compute sample statistics from the reference window:
 
-```
-z_i = |x_i - mu| / sigma
-```
+$$\hat{\mu} = \frac{1}{n}\sum_{i=1}^{n} x_i \qquad \hat{\sigma} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_i - \hat{\mu})^2}$$
 
-A point is flagged anomalous when `z_i > threshold` (default: 3.0). For multivariate data, the maximum Z-score across all features is used.
+**Scoring function** - for each new observation $x_i$:
 
-**Strengths:** Fast computation, interpretable threshold, effective for unimodal distributions.
+$$z_i = \frac{|x_i - \hat{\mu}|}{\hat{\sigma}}$$
+
+A point is flagged anomalous when $z_i > \tau$ where $\tau$ is the threshold (default: 3.0). For multivariate input $\mathbf{x}_i \in \mathbb{R}^d$, the maximum Z-score across all features is used:
+
+$$z_i = \max_{j=1}^{d} \frac{|x_{i,j} - \hat{\mu}_j|}{\hat{\sigma}_j}$$
+
+**Strengths:** $O(n)$ computation, interpretable threshold, effective for unimodal distributions.
 **Limitations:** Sensitive to non-Gaussian data, influenced by outliers in training set.
 
 ### IQR Detector
 
-Uses the Interquartile Range (Q3 - Q1) to define robust bounds that are resistant to outliers. Based on non-parametric statistics.
+Uses the Interquartile Range to define robust bounds that are resistant to outliers. Based on non-parametric statistics with Tukey's fence method.
 
-**Decision rule:**
+**Bounds computation** from the training set:
 
-```
-Lower bound = Q1 - factor * IQR
-Upper bound = Q3 + factor * IQR
-```
+$$\text{IQR} = Q_3 - Q_1$$
 
-Points outside these bounds are flagged. Default `factor` is 1.5 (Tukey's standard fence).
+$$L = Q_1 - k \cdot \text{IQR} \qquad U = Q_3 + k \cdot \text{IQR}$$
+
+where $k$ is the fence factor (default: 1.5). A point $x_i$ is anomalous if:
+
+$$x_i < L \quad \lor \quad x_i > U$$
+
+The anomaly score is the normalized distance beyond the fence:
+
+$$s_i = \frac{\max(0,\; L - x_i) + \max(0,\; x_i - U)}{\text{IQR}}$$
 
 **Strengths:** No distributional assumptions, robust to heavy tails.
 **Limitations:** Less sensitive to subtle anomalies in high-dimensional data.
@@ -344,36 +353,61 @@ Points outside these bounds are flagged. Default `factor` is 1.5 (Tukey's standa
 
 Exponentially Weighted Moving Average tracks the evolving mean and variance of a time series, giving more weight to recent observations. Rooted in statistical process control (SPC) theory.
 
-**Update equations:**
+**Recursive update equations** for smoothing parameter $\alpha \in (0, 1]$:
 
-```
-ewma_t     = alpha * x_t + (1 - alpha) * ewma_{t-1}
-ewmvar_t   = (1 - alpha) * (ewmvar_{t-1} + alpha * (x_t - ewma_{t-1})^2)
-deviation  = |x_t - ewma_t| / sqrt(ewmvar_t)
-```
+$$\hat{\mu}_t = \alpha \cdot x_t + (1 - \alpha) \cdot \hat{\mu}_{t-1}$$
 
-**Strengths:** Naturally handles non-stationary data, low memory footprint, ideal for streaming.
-**Limitations:** Requires tuning of `alpha` smoothing parameter.
+$$\hat{v}_t = (1 - \alpha)\left(\hat{v}_{t-1} + \alpha(x_t - \hat{\mu}_{t-1})^2\right)$$
+
+**Deviation score** at time $t$:
+
+$$d_t = \frac{|x_t - \hat{\mu}_t|}{\sqrt{\hat{v}_t}}$$
+
+A point is anomalous when $d_t > \tau$. Initialization: $\hat{\mu}_0 = x_0$, $\hat{v}_0 = 0$.
+
+**Strengths:** Naturally handles non-stationary data, $O(1)$ memory per step, ideal for streaming.
+**Limitations:** Requires tuning of $\alpha$ smoothing parameter.
 
 ### Isolation Forest
 
-An unsupervised machine learning method that isolates anomalies by randomly partitioning the feature space. Anomalous points require fewer partitions to isolate, resulting in shorter path lengths in the ensemble of random trees.
+An unsupervised machine learning method that isolates anomalies by randomly partitioning the feature space. For a dataset $\mathbf{X} \in \mathbb{R}^{n \times d}$, the algorithm builds $T$ isolation trees. The anomaly score for observation $\mathbf{x}_i$ is:
+
+$$s(\mathbf{x}_i, n) = 2^{-\frac{E[h(\mathbf{x}_i)]}{c(n)}}$$
+
+where $E[h(\mathbf{x}_i)]$ is the expected path length across all trees and $c(n)$ is the average path length of an unsuccessful search in a Binary Search Tree:
+
+$$c(n) = 2H(n-1) - \frac{2(n-1)}{n}, \qquad H(k) = \ln(k) + \gamma$$
+
+with $\gamma \approx 0.5772$ (Euler-Mascheroni constant). Scores near 1.0 indicate anomalies; scores near 0.5 indicate normal points.
 
 **Reference:** Liu, F.T., Ting, K.M. and Zhou, Z.H., 2008. Isolation forest. In *ICDM 2008*, pp. 413-422.
 
-**Strengths:** Handles high-dimensional data, no distributional assumptions, scales linearly.
+**Strengths:** Handles high-dimensional data, no distributional assumptions, $O(n \log n)$ complexity.
 **Limitations:** Contamination parameter must approximate the true anomaly ratio.
 
 ### Ensemble Voting
 
-The `AnomalyDetector` combines individual method outputs through a voting mechanism:
+The `AnomalyDetector` combines $M$ individual method outputs through a weighted voting mechanism.
 
-1. Each method produces an independent anomaly flag per observation.
-2. Anomaly scores are normalized to [0, 1] per method.
-3. A minimum vote count is computed as `max(1, floor(n_methods * (1 - sensitivity)))`.
-4. An observation is flagged if it receives at least `min_votes` positive flags.
-5. The final score is the mean of normalized scores across all methods.
-6. Threat level is classified from the mean score of flagged observations.
+**Step 1** - Each method $m$ produces an independent anomaly flag $a_i^{(m)} \in \{0, 1\}$ and raw score $r_i^{(m)}$.
+
+**Step 2** - Scores are min-max normalized per method:
+
+$$\tilde{r}_i^{(m)} = \frac{r_i^{(m)}}{\max_j \; r_j^{(m)}}$$
+
+**Step 3** - Minimum vote threshold from sensitivity parameter $\lambda \in [0, 1]$:
+
+$$V_{\min} = \max\!\left(1, \;\lfloor M \cdot (1 - \lambda) \rfloor\right)$$
+
+**Step 4** - Final anomaly decision:
+
+$$A_i = \begin{cases} 1 & \text{if } \sum_{m=1}^{M} a_i^{(m)} \geq V_{\min} \\ 0 & \text{otherwise} \end{cases}$$
+
+**Step 5** - Combined score:
+
+$$S_i = \frac{1}{M}\sum_{m=1}^{M} \tilde{r}_i^{(m)}$$
+
+**Step 6** - Threat level classified from $\bar{S} = \text{mean}(S_i \mid A_i = 1)$:
 
 | Score Range | Threat Level |
 |---|---|
@@ -387,7 +421,23 @@ The `AnomalyDetector` combines individual method outputs through a voting mechan
 
 ## Attack Simulation
 
-The `NetworkSimulator` generates five features per time step: `bytes_sent`, `bytes_received`, `packets`, `connections`, and `latency`. Normal traffic follows a Poisson/Exponential/Gamma mixture with a sinusoidal diurnal cycle. Attacks are injected by multiplying affected features within a configurable window.
+The `NetworkSimulator` generates a feature vector $\mathbf{f}_t \in \mathbb{R}^5$ per time step with components: `bytes_sent`, `bytes_received`, `packets`, `connections`, and `latency`.
+
+**Normal traffic generation** uses a mixture of statistical distributions modulated by a diurnal cycle:
+
+$$c(t) = 0.3 \cdot \sin\!\left(\frac{2\pi t}{288}\right) + 1.0$$
+
+$$\text{bytes\_sent}_t \sim \text{Exp}(\lambda=500) \cdot c(t) + 200$$
+
+$$\text{bytes\_received}_t \sim \text{Exp}(\lambda=800) \cdot c(t) + 300$$
+
+$$\text{packets}_t \sim \text{Poisson}(\mu=50) \cdot c(t)$$
+
+$$\text{connections}_t \sim \text{Poisson}(\mu=10) \cdot c(t)$$
+
+$$\text{latency}_t \sim \text{Gamma}(k=2,\;\theta=10) + 5$$
+
+**Attack injection** multiplies affected features by a random factor $\eta \sim U(\text{low}, \text{high})$ within a window of up to 5 consecutive time steps:
 
 | Attack Type | Affected Features | Multiplier Range | Real-World Analogue |
 |---|---|---|---|
