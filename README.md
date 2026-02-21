@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/logo.png" alt="Livermorium Logo" width="400">
+</p>
+
+<p align="center">
   <strong>LIVERMORIUM</strong><br>
   <em>Intelligent Cybersecurity Anomaly Detection Library</em>
 </p>
